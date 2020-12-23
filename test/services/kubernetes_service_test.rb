@@ -198,7 +198,8 @@ class Integration::KubernetesServiceTest < ActiveSupport::TestCase
       url = 'https://my-api.example.com'
       service_name = 'My API'
       port = 7443
-      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port)
+      tenant_id = '2'
+      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port, tenant_id)
       json = {
         rules: [{
           host: "my-api.example.com",
@@ -206,14 +207,15 @@ class Integration::KubernetesServiceTest < ActiveSupport::TestCase
             paths: [{ path: '/', pathType: 'Prefix', backend: { service: { name: service_name, port: { name: port } } } }]
           }
         }],
-        tls: [{hosts: ["my-api.example.com"], secretName: "My API-tls"}]
+        tls: [{hosts: ["my-api.example.com"], secretName: "My API-tls-2"}]
       }
       assert_equal json, spec.to_hash
 
       url = 'http://my-api.example.com'
       service_name = 'My API'
       port = 7780
-      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port)
+      tenant_id = '2'
+      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port, tenant_id)
       json = {
         rules: [{
           host: "my-api.example.com",
@@ -230,7 +232,8 @@ class Integration::KubernetesServiceTest < ActiveSupport::TestCase
       url = 'my-api.example.com'
       service_name = 'My API'
       port = 7443
-      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port)
+      tenant_id = '2'
+      spec = Integration::KubernetesService::IngressSpec.new(url, service_name, port, tenant_id)
       json = {
         rules: [{
           host: "my-api.example.com",
@@ -238,7 +241,7 @@ class Integration::KubernetesServiceTest < ActiveSupport::TestCase
             paths: [{ path: '/', pathType: 'Prefix', backend: { service: { name: service_name, port: { name: port } } } }]
           }
         }],
-        tls: [{hosts: ["my-api.example.com"], secretName: "My API-tls"}]
+        tls: [{hosts: ["my-api.example.com"], secretName: "My API-tls-2"}]
       }
       assert_equal json, spec.to_hash
     end

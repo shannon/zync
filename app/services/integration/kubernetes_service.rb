@@ -164,16 +164,18 @@ class Integration::KubernetesService < Integration::ServiceBase
   end
 
   class IngressSpec < K8s::Resource
-    def initialize(url, service, port)
+    def initialize(url, service, port, tenant_id)
       uri = URI(url)
+      host = uri.host || uri.path
+
       tls_options = [{
-        hosts: [uri.host || uri.path],
-        secretName: service + '-tls'
+        hosts: [host],
+        secretName: service + '-tls-' + tenant_id
       }] if uri.class == URI::HTTPS || uri.scheme.blank?
 
       super({
         rules: [{
-          host: uri.host || uri.path,
+          host: host,
           http: {
             paths: [{
               path: '/',
@@ -201,9 +203,11 @@ class Integration::KubernetesService < Integration::ServiceBase
   end
 
   def build_proxy_ingresses(entry)
+    data = entry.data
+    tenant_id = String(entry.tenant_id)
     build_ingresses('zync-3scale-api-', [
-                   IngressSpec.new(entry.data.fetch('endpoint'), 'apicast-production', 'gateway'),
-                   IngressSpec.new(entry.data.fetch('sandbox_endpoint'), 'apicast-staging', 'gateway')
+                   IngressSpec.new(data.fetch('endpoint'), 'apicast-production', 'gateway', tenant_id),
+                   IngressSpec.new(data.fetch('sandbox_endpoint'), 'apicast-staging', 'gateway', tenant_id)
                  ], labels: labels_for_proxy(entry), annotations: annotations_for(entry))
   end
 
@@ -270,15 +274,16 @@ class Integration::KubernetesService < Integration::ServiceBase
     data = entry.data
     domain, admin_domain = data.values_at('domain', 'admin_domain')
     metadata = { labels: labels_for_provider(entry), annotations: annotations_for(entry) }
+    tenant_id = String(entry.tenant_id)
 
     if admin_domain == domain # master account
       build_ingresses('zync-3scale-master-', [
-                     IngressSpec.new(data.fetch('domain'), 'system-master', 'http')
+                     IngressSpec.new(data.fetch('domain'), 'system-master', 'http', tenant_id)
                    ], **metadata)
     else
       build_ingresses('zync-3scale-provider-', [
-                     IngressSpec.new(data.fetch('domain'), 'system-developer', 'http'),
-                     IngressSpec.new(data.fetch('admin_domain'), 'system-provider', 'http')
+                     IngressSpec.new(data.fetch('domain'), 'system-developer', 'http', tenant_id),
+                     IngressSpec.new(data.fetch('admin_domain'), 'system-provider', 'http', tenant_id)
                    ], **metadata)
     end
   end
